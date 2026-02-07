@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>N8N Objection Handler 2026</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #EA4B71;
+            --primary-dark: #D43B5F;
+            --secondary: #2E3A59;
+            --accent: #00D4AA;
+            --bg-main: #F8F9FA;
+            --bg-card: #FFFFFF;
+            --text-primary: #1A1A1A;
+            --text-secondary: #5A5A5A;
+            --border: #E0E0E0;
+            --success: #28A745;
+            --warning: #FFC107;
+            --info: #17A2B8;
+            --shadow: rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-main);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 0;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 1% 2%;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+
+        .header h1 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 1%;
+        }
+
+        .header p {
+            font-size: 0.75rem;
+            opacity: 0.95;
+            margin-bottom: 1%;
+        }
+
+        /* Search Bar */
+        .search-container {
+            background: white;
+            padding: 1% 2%;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 99;
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 1%;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 3% 3% 3% 12%;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            background: var(--bg-main);
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: white;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 4%;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        /* Filter Tabs */
+        .filter-tabs {
+            display: flex;
+            gap: 1%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            padding-bottom: 1%;
+        }
+
+        .filter-tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .filter-tab {
+            flex-shrink: 0;
+            padding: 2% 4%;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .filter-tab.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Main Content */
+        .content {
+            padding: 2% 1%;
+            max-width: 100%;
+        }
+
+        /* Objection Card */
+        .objection-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            margin-bottom: 2%;
+            box-shadow: 0 2px 6px var(--shadow);
+            overflow: hidden;
+            border-left: 4px solid var(--primary);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .objection-header {
+            padding: 3% 4%;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 2%;
+        }
+
+        .objection-header:active {
+            background: var(--bg-main);
+        }
+
+        .objection-title {
+            flex: 1;
+        }
+
+        .objection-title h3 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 1%;
+            color: var(--text-primary);
+            line-height: 1.4;
+        }
+
+        .objection-category {
+            display: inline-block;
+            padding: 1% 3%;
+            background: var(--accent);
+            color: white;
+            border-radius: 12px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-top: 1%;
+        }
+
+        .objection-category.pricing { background: var(--warning); color: var(--text-primary); }
+        .objection-category.technical { background: var(--info); }
+        .objection-category.trust { background: var(--success); }
+        .objection-category.competition { background: var(--secondary); }
+        .objection-category.timing { background: #9C27B0; }
+
+        .expand-icon {
+            font-size: 1.2rem;
+            color: var(--primary);
+            transition: transform 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .expand-icon.expanded {
+            transform: rotate(180deg);
+        }
+
+        .objection-content {
+            display: none;
+            padding: 0 4% 4% 4%;
+            border-top: 1px solid var(--border);
+            background: linear-gradient(to bottom, #FAFAFA 0%, white 100%);
+        }
+
+        .objection-content.show {
+            display: block;
+            animation: expandContent 0.3s ease;
+        }
+
+        @keyframes expandContent {
+            from {
+                opacity: 0;
+                max-height: 0;
+            }
+            to {
+                opacity: 1;
+                max-height: 1000px;
+            }
+        }
+
+        .response-section {
+            margin-top: 3%;
+        }
+
+        .response-section h4 {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 2%;
+            display: flex;
+            align-items: center;
+            gap: 2%;
+        }
+
+        .response-section p,
+        .response-section li {
+            font-size: 0.85rem;
+            line-height: 1.7;
+            color: var(--text-primary);
+            margin-bottom: 2%;
+        }
+
+        .response-section ul {
+            padding-left: 5%;
+            margin-bottom: 2%;
+        }
+
+        .response-section li {
+            margin-bottom: 1.5%;
+        }
+
+        .tip-box {
+            background: linear-gradient(135deg, #FFF9E6 0%, #FFF4CC 100%);
+            border-left: 4px solid var(--warning);
+            padding: 3%;
+            border-radius: 8px;
+            margin-top: 3%;
+        }
+
+        .tip-box strong {
+            color: #E65100;
+            font-size: 0.8rem;
+        }
+
+        .tip-box p {
+            margin-top: 1%;
+            color: var(--text-primary);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 10% 5%;
+            color: var(--text-secondary);
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 3%;
+            opacity: 0.3;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--secondary);
+            color: white;
+            padding: 4% 2%;
+            text-align: center;
+            margin-top: 4%;
+        }
+
+        .footer p {
+            font-size: 0.75rem;
+            opacity: 0.9;
+        }
+
+        /* Quick Stats */
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            background: white;
+            padding: 2%;
+            margin: 1% 1% 2% 1%;
+            border-radius: 12px;
+            box-shadow: 0 2px 6px var(--shadow);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-top: 1%;
+        }
+
+        /* Highlight search terms */
+        .highlight {
+            background: yellow;
+            font-weight: 600;
+            padding: 0 1%;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>🚀 N8N Objection Handler 2026</h1>
+        <p>Quick responses to common client objections</p>
+    </div>
+
+    <!-- Search & Filter -->
+    <div class="search-container">
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Search objections...">
+        </div>
+        <div class="filter-tabs" id="filterTabs">
+            <div class="filter-tab active" data-filter="all">All</div>
+            <div class="filter-tab" data-filter="pricing">Pricing</div>
+            <div class="filter-tab" data-filter="technical">Technical</div>
+            <div class="filter-tab" data-filter="trust">Trust</div>
+            <div class="filter-tab" data-filter="competition">Competition</div>
+            <div class="filter-tab" data-filter="timing">Timing</div>
+        </div>
+    </div>
+
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+        <div class="stat-item">
+            <div class="stat-number" id="totalObjections">24</div>
+            <div class="stat-label">Objections</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number" id="categoriesCount">5</div>
+            <div class="stat-label">Categories</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number" id="visibleCount">24</div>
+            <div class="stat-label">Showing</div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content" id="objectionsContainer"></div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>💡 Tip: Tap any objection to view detailed response strategies</p>
+        <p style="margin-top: 2%; font-size: 0.7rem; opacity: 0.7;">© 2026 N8N Solutions Guide</p>
+    </div>
+
+    <script>
+        // Comprehensive objection database
+        const objections = [
+            {
+                id: 1,
+                category: 'pricing',
+                objection: "N8N is too expensive compared to other automation tools",
+                response: "Let's look at the total cost of ownership. While the initial price might seem higher, n8n's self-hosted option eliminates per-execution fees that can cost thousands monthly with cloud services like Zapier or Make.com.",
+                bullets: [
+                    "Self-hosted version is completely free and open-source",
+                    "Cloud version has unlimited executions - no hidden per-operation costs",
+                    "Average companies save 60-80% annually compared to similar platforms",
+                    "One-time setup vs. recurring per-task pricing with competitors"
+                ],
+                tip: "Show a 12-month cost comparison spreadsheet. Include hidden costs like API overages, extra users, and premium features that competitors charge for separately."
+            },
+            {
+                id: 2,
+                category: 'technical',
+                objection: "Our team doesn't have technical skills to use n8n",
+                response: "N8n is designed with a visual, no-code interface that's more intuitive than traditional coding. Your team can build workflows by dragging and connecting nodes - no programming required.",
+                bullets: [
+                    "Visual drag-and-drop interface similar to flowchart tools",
+                    "300+ pre-built integrations with popular apps",
+                    "Extensive template library for common workflows",
+                    "Built-in testing and debugging tools",
+                    "Active community with thousands of ready-to-use workflow examples"
+                ],
+                tip: "Offer a live 15-minute demo where THEY build a simple workflow themselves. Let them experience how intuitive it is firsthand."
+            },
+            {
+                id: 3,
+                category: 'trust',
+                objection: "We've never heard of n8n - is it reliable?",
+                response: "N8n is one of the fastest-growing workflow automation platforms with over 40,000 GitHub stars and used by thousands of companies worldwide, including Fortune 500 enterprises.",
+                bullets: [
+                    "Open-source with transparent codebase (40,000+ GitHub stars)",
+                    "Active development with weekly updates and improvements",
+                    "Used by companies like Accenture, IBM, and VMware",
+                    "99.9% uptime SLA for cloud version",
+                    "Strong community of 50,000+ developers and users"
+                ],
+                tip: "Share case studies from their industry. Show logos of recognizable brands using n8n. Reference the GitHub activity to demonstrate active development."
+            },
+            {
+                id: 4,
+                category: 'competition',
+                objection: "Why not just use Zapier? Everyone knows it",
+                response: "Zapier is great for simple tasks, but n8n offers more power and flexibility for complex workflows at a fraction of the cost. Plus, you own your data with self-hosting.",
+                bullets: [
+                    "More advanced features: error handling, branching, custom code",
+                    "No per-task pricing - unlimited executions on self-hosted",
+                    "Full data control and privacy with self-hosting option",
+                    "More granular control over workflow logic and conditions",
+                    "Can integrate with internal tools and databases Zapier can't reach"
+                ],
+                tip: "Create a feature comparison table highlighting n8n's advanced capabilities. Show a complex workflow that would cost 10x more on Zapier due to task limits."
+            },
+            {
+                id: 5,
+                category: 'timing',
+                objection: "We're not ready to implement automation right now",
+                response: "I understand timing concerns. However, every month of delay means continued manual work costing your team valuable hours. Starting small with one workflow can show immediate ROI.",
+                bullets: [
+                    "Can start with a single high-impact workflow in just days",
+                    "Pilot program requires minimal resources (1-2 days setup)",
+                    "Immediate time savings - average first workflow saves 10+ hours/week",
+                    "Flexible implementation that doesn't disrupt current operations",
+                    "Can scale gradually as you see results"
+                ],
+                tip: "Propose a 30-day pilot with one critical workflow. Calculate the cost of manual work during those 30 days to show the opportunity cost of waiting."
+            },
+            {
+                id: 6,
+                category: 'technical',
+                objection: "What if n8n doesn't integrate with our specific tools?",
+                response: "N8n has 300+ pre-built integrations, but even if your tool isn't listed, n8n's HTTP request node and webhook capabilities can connect to virtually any API.",
+                bullets: [
+                    "300+ native integrations including all major platforms",
+                    "Generic HTTP Request node works with any REST API",
+                    "Webhook support for custom integrations",
+                    "Community nodes for niche applications",
+                    "Custom node development possible for unique requirements"
+                ],
+                tip: "Ask specifically which tools they use. Research beforehand if n8n has native support. If not, demonstrate how easy it is to use the HTTP node with their tool's API documentation."
+            },
+            {
+                id: 7,
+                category: 'pricing',
+                objection: "The self-hosted option sounds complicated and expensive to maintain",
+                response: "Self-hosting n8n is surprisingly simple and cost-effective. It can run on a basic server costing as little as $10-20/month, and setup takes under an hour with our Docker configuration.",
+                bullets: [
+                    "One-click deployment with Docker on any cloud platform",
+                    "Minimal server requirements ($10-20/month VPS is sufficient)",
+                    "Automated updates and backup systems available",
+                    "Complete control over data security and compliance",
+                    "Optional managed cloud version if self-hosting isn't preferred"
+                ],
+                tip: "Offer to set up a demo self-hosted instance for them. Show the actual server costs vs. cloud automation tool subscription costs for their expected volume."
+            },
+            {
+                id: 8,
+                category: 'trust',
+                objection: "How secure is our data with n8n?",
+                response: "Data security is a core priority. With self-hosting, you maintain complete control. The cloud version is ISO 27001 certified with enterprise-grade encryption and compliance standards.",
+                bullets: [
+                    "Self-hosted = complete data control within your infrastructure",
+                    "Cloud version: ISO 27001, SOC 2 Type II certified",
+                    "End-to-end encryption for all data transmission",
+                    "Role-based access control and audit logging",
+                    "GDPR, HIPAA, and other compliance standards supported"
+                ],
+                tip: "For regulated industries, emphasize self-hosting option. Share the security whitepaper and compliance certifications. Offer to arrange a security review call with their IT team."
+            },
+            {
+                id: 9,
+                category: 'competition',
+                objection: "Make.com looks similar and cheaper",
+                response: "Make.com is a solid option, but n8n provides superior value through self-hosting, unlimited executions, and more advanced workflow capabilities without hidden costs.",
+                bullets: [
+                    "Make.com charges per operation - costs escalate quickly at scale",
+                    "N8n self-hosted = truly unlimited executions at zero variable cost",
+                    "More powerful debugging and error handling in n8n",
+                    "Better support for complex conditional logic and branching",
+                    "Active open-source community vs. closed-source platform"
+                ],
+                tip: "Show a cost projection at 50K, 100K, and 500K operations per month. Make.com's per-operation pricing becomes prohibitively expensive at scale."
+            },
+            {
+                id: 10,
+                category: 'technical',
+                objection: "What about support if something breaks?",
+                response: "N8n offers multiple support tiers. Self-hosted users have access to extensive documentation and active community forums. Cloud customers get priority email support, and enterprise plans include dedicated support.",
+                bullets: [
+                    "Comprehensive documentation with 500+ guides and tutorials",
+                    "Active community forum with 50,000+ members",
+                    "Cloud plan includes email support with 24-hour response time",
+                    "Enterprise plans offer dedicated Slack channel and phone support",
+                    "Regular office hours and webinars for all users"
+                ],
+                tip: "Connect them with the community forum showing real response times. Share examples of complex issues resolved quickly. Offer a trial period with full support access."
+            },
+            {
+                id: 11,
+                category: 'timing',
+                objection: "Our IT team is already overwhelmed with projects",
+                response: "That's exactly why automation should be a priority. N8n can reduce IT workload by automating repetitive tasks. Implementation is lightweight - often requiring less than 2 days of IT time for initial setup.",
+                bullets: [
+                    "Minimal IT involvement for cloud version (almost zero setup)",
+                    "Self-hosted setup takes 1-2 hours with Docker",
+                    "Business teams can build workflows without IT bottlenecks",
+                    "Reduces long-term IT support tickets through automation",
+                    "Can start with IT-independent workflows like marketing automation"
+                ],
+                tip: "Identify workflows that currently burden IT (like user provisioning or report generation). Show how automating these frees up IT for strategic work."
+            },
+            {
+                id: 12,
+                category: 'pricing',
+                objection: "We need to see ROI before committing budget",
+                response: "Completely reasonable. Let's calculate your current manual process costs. Most companies see ROI within 30-60 days by automating just 2-3 repetitive workflows.",
+                bullets: [
+                    "Free self-hosted version allows risk-free ROI validation",
+                    "Average workflow saves 10-20 hours of manual work weekly",
+                    "Calculate: [Hours saved × Hourly rate × 52 weeks]",
+                    "Typical payback period: 1-2 months on paid plans",
+                    "Many companies achieve 500%+ ROI in first year"
+                ],
+                tip: "Build a custom ROI calculator during the meeting. Input their actual labor costs and time spent on manual tasks. Show the breakeven point and 12-month savings projection."
+            },
+            {
+                id: 13,
+                category: 'technical',
+                objection: "Will this work with our legacy systems?",
+                response: "Yes. N8n's flexibility makes it excellent for legacy integration. The HTTP request node can connect to any system with an API, and we can even work with SOAP, FTP, databases, and SSH connections.",
+                bullets: [
+                    "Native support for databases (MySQL, PostgreSQL, MongoDB, etc.)",
+                    "SOAP and REST API connectivity",
+                    "FTP/SFTP file transfer capabilities",
+                    "SSH command execution for server management",
+                    "Can act as middleware between legacy and modern systems"
+                ],
+                tip: "Ask about their specific legacy systems. Research beforehand if n8n has examples of similar integrations. Offer a proof-of-concept connecting to one legacy system."
+            },
+            {
+                id: 14,
+                category: 'trust',
+                objection: "What happens if n8n shuts down or pivots?",
+                response: "N8n is open-source, which means the code is publicly available forever. Even if the company disappeared, you could continue running and maintaining your workflows indefinitely.",
+                bullets: [
+                    "Open-source license (Apache 2.0) guarantees code availability",
+                    "Self-hosted version runs independently of the company",
+                    "Can fork the project and maintain it yourself if needed",
+                    "Strong financial backing and growing revenue demonstrates stability",
+                    "Active contributor community ensures continued development"
+                ],
+                tip: "Explain the difference between proprietary SaaS (locked in) and open-source (you own it). Show the GitHub repository activity and contributor growth as stability indicators."
+            },
+            {
+                id: 15,
+                category: 'competition',
+                objection: "Microsoft Power Automate is included in our Office 365",
+                response: "While Power Automate is convenient, n8n offers significantly more flexibility and better pricing for advanced workflows. Plus, many companies use both - n8n for complex automation and Power Automate for simple Office tasks.",
+                bullets: [
+                    "Power Automate has strict connector limits on basic plans",
+                    "N8n provides more advanced logic and error handling",
+                    "Better cross-platform integration beyond Microsoft ecosystem",
+                    "No additional per-flow or per-user costs with n8n",
+                    "Can complement Power Automate for specialized workflows"
+                ],
+                tip: "Don't position as replacement - suggest hybrid approach. Show workflows that Power Automate struggles with (complex API chains, advanced data transformation)."
+            },
+            {
+                id: 16,
+                category: 'timing',
+                objection: "Let's revisit this next quarter/year",
+                response: "I appreciate planning cycles. May I ask - what would need to change by next quarter to make this a priority? Often, the pain points driving this conversation will only intensify with time.",
+                bullets: [
+                    "Calculate cost of waiting: [manual hours × hourly rate × months]",
+                    "Early adoption advantage - workflows mature and improve over time",
+                    "Q1 start means full-year benefits vs. partial-year implementation",
+                    "Can begin with free version today, formalize budget later",
+                    "Pilot project now can inform better next-quarter budgeting"
+                ],
+                tip: "Probe for the real reason behind the delay. Is it budget, competing priorities, or uncertainty? Address the underlying concern rather than accepting the postponement at face value."
+            },
+            {
+                id: 17,
+                category: 'technical',
+                objection: "We're worried about vendor lock-in",
+                response: "This is where n8n truly shines. Being open-source and self-hostable means zero vendor lock-in. You can export all workflows as JSON and migrate anywhere if needed.",
+                bullets: [
+                    "All workflows exportable as standard JSON files",
+                    "Self-hosted version = complete independence from vendor",
+                    "Can migrate between self-hosted and cloud freely",
+                    "Open API allows integration with any workflow management system",
+                    "No proprietary formats or data lock-in"
+                ],
+                tip: "Demonstrate exporting a workflow as JSON. Show how it's human-readable and could be recreated elsewhere. Compare this to proprietary platforms where you can't extract your work."
+            },
+            {
+                id: 18,
+                category: 'pricing',
+                objection: "The enterprise plan seems expensive for our size",
+                response: "The enterprise plan is designed for large-scale deployments. For most mid-size companies, the Pro plan or even self-hosted version provides everything needed. Let's right-size the solution to your actual requirements.",
+                bullets: [
+                    "Pro plan handles most companies under 500 employees",
+                    "Self-hosted scales to any size at fixed infrastructure cost",
+                    "Enterprise features (SSO, SLA) only needed for specific compliance needs",
+                    "Can start smaller and upgrade only when specific features needed",
+                    "Custom pricing available based on actual usage and needs"
+                ],
+                tip: "Don't oversell. Qualify their actual needs - do they need SSO? Dedicated support? Audit logging? Often they don't, making cheaper plans perfectly adequate."
+            },
+            {
+                id: 19,
+                category: 'trust',
+                objection: "How do we know n8n won't change pricing dramatically?",
+                response: "N8n's pricing has remained stable since launch, but more importantly, the self-hosted version is always free. You have a permanent fallback option that protects you from pricing changes.",
+                bullets: [
+                    "Self-hosted version is Apache 2.0 licensed - free forever",
+                    "Transparent pricing on website with no hidden fees",
+                    "Historical pricing stability since 2019 launch",
+                    "Can lock in annual contracts at current rates",
+                    "Self-hosted option means you control your costs completely"
+                ],
+                tip: "Suggest starting self-hosted to validate value, then potentially moving to cloud for convenience. This removes pricing risk entirely during evaluation."
+            },
+            {
+                id: 20,
+                category: 'competition',
+                objection: "Can't our developers just build this internally?",
+                response: "They absolutely could, but the opportunity cost is significant. Building a robust workflow automation platform takes thousands of development hours. N8n gives you those thousands of hours for free via open-source.",
+                bullets: [
+                    "Building comparable platform: estimated 6-12 months of dev time",
+                    "Ongoing maintenance, security updates, and feature development",
+                    "N8n provides 300+ pre-built integrations out of the box",
+                    "Your developers can focus on business-specific features instead",
+                    "Can customize n8n through custom nodes if needed"
+                ],
+                tip: "Calculate the cost: [Developer salary × months to build × opportunity cost of not building revenue features]. Show that even free self-hosted n8n saves hundreds of thousands."
+            },
+            {
+                id: 21,
+                category: 'technical',
+                objection: "What about workflow performance at scale?",
+                response: "N8n is built for scale. The architecture supports horizontal scaling, and customers successfully run millions of executions monthly. Self-hosted installations can be optimized for your specific performance needs.",
+                bullets: [
+                    "Queue-based architecture handles high-volume workloads",
+                    "Horizontal scaling by adding worker nodes",
+                    "Customers successfully running 10M+ executions monthly",
+                    "Built-in performance monitoring and optimization tools",
+                    "Can dedicate infrastructure resources for critical workflows"
+                ],
+                tip: "If they have specific volume concerns, offer a load testing session. Set up a demo workflow that processes high volumes to demonstrate performance capabilities."
+            },
+            {
+                id: 22,
+                category: 'timing',
+                objection: "We're in the middle of other system implementations",
+                response: "N8n can actually complement and enhance other system implementations. Many companies use n8n to bridge gaps between new and existing systems during transition periods.",
+                bullets: [
+                    "Acts as middleware during system migrations",
+                    "Can automate data synchronization between old and new systems",
+                    "Lightweight implementation doesn't compete for same resources",
+                    "Often reveals integration opportunities during other projects",
+                    "Can start with small workflows that don't interfere with major projects"
+                ],
+                tip: "Position n8n as a project accelerator, not another project. Show how it could actually speed up their current implementation by automating data migration or testing."
+            },
+            {
+                id: 23,
+                category: 'trust',
+                objection: "We prefer to work with established enterprise vendors",
+                response: "N8n has enterprise clients including Fortune 500 companies, and the open-source nature actually provides more long-term stability than proprietary solutions. You're not dependent on a single vendor's business decisions.",
+                bullets: [
+                    "Used by Accenture, IBM, VMware, and other enterprise companies",
+                    "Open-source provides transparency and community backing",
+                    "Venture-backed with strong financial position",
+                    "Growing 300%+ year-over-year demonstrates market validation",
+                    "Enterprise support plan includes SLAs and dedicated resources"
+                ],
+                tip: "Provide enterprise references from similar industries. Arrange calls with existing enterprise customers. Share case studies showing enterprise-scale deployments."
+            },
+            {
+                id: 24,
+                category: 'pricing',
+                objection: "We have budget constraints this fiscal year",
+                response: "The free self-hosted version allows you to start immediately without budget approval. You can demonstrate value and ROI now, making it easier to secure budget for cloud or enterprise features later.",
+                bullets: [
+                    "Self-hosted version is 100% free with all core features",
+                    "Start building workflows and showing results today",
+                    "ROI documentation helps with future budget requests",
+                    "Can phase implementation to match budget availability",
+                    "Many companies start free, then upgrade based on proven value"
+                ],
+                tip: "Offer to help build a business case for next year's budget while they use the free version. Track time savings and ROI metrics that justify future investment."
+            }
+        ];
+
+        // State management
+        let currentFilter = 'all';
+        let searchTerm = '';
+
+        // Initialize app
+        function init() {
+            renderObjections();
+            setupEventListeners();
+            updateStats();
+        }
+
+        // Render objections
+        function renderObjections() {
+            const container = document.getElementById('objectionsContainer');
+            const filtered = filterObjections();
+            
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                            </path>
+                        </svg>
+                        <h3 style="font-size: 1rem; margin-bottom: 2%;">No objections found</h3>
+                        <p style="font-size: 0.85rem;">Try adjusting your search or filter</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(obj => `
+                <div class="objection-card" data-id="${obj.id}">
+                    <div class="objection-header" onclick="toggleCard(${obj.id})">
+                        <div class="objection-title">
+                            <h3>${highlightText(obj.objection)}</h3>
+                            <span class="objection-category ${obj.category}">${obj.category}</span>
+                        </div>
+                        <div class="expand-icon" id="icon-${obj.id}">▼</div>
+                    </div>
+                    <div class="objection-content" id="content-${obj.id}">
+                        <div class="response-section">
+                            <h4>💬 Immediate Response</h4>
+                            <p>${obj.response}</p>
+                        </div>
+                        <div class="response-section">
+                            <h4>🎯 Key Points to Emphasize</h4>
+                            <ul>
+                                ${obj.bullets.map(bullet => `<li>${bullet}</li>`).join('')}
+                            </ul>
+                        </div>
+                        <div class="tip-box">
+                            <strong>💡 Pro Tip:</strong>
+                            <p>${obj.tip}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            updateStats();
+        }
+
+        // Toggle card expansion
+        function toggleCard(id) {
+            const content = document.getElementById(`content-${id}`);
+            const icon = document.getElementById(`icon-${id}`);
+            
+            const isExpanded = content.classList.contains('show');
+            
+            // Close all other cards
+            document.querySelectorAll('.objection-content').forEach(c => {
+                c.classList.remove('show');
+            });
+            document.querySelectorAll('.expand-icon').forEach(i => {
+                i.classList.remove('expanded');
+            });
+            
+            // Toggle current card
+            if (!isExpanded) {
+                content.classList.add('show');
+                icon.classList.add('expanded');
+            }
+        }
+
+        // Filter objections
+        function filterObjections() {
+            return objections.filter(obj => {
+                const matchesFilter = currentFilter === 'all' || obj.category === currentFilter;
+                const matchesSearch = searchTerm === '' || 
+                    obj.objection.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    obj.response.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    obj.bullets.some(b => b.toLowerCase().includes(searchTerm.toLowerCase()));
+                
+                return matchesFilter && matchesSearch;
+            });
+        }
+
+        // Highlight search terms
+        function highlightText(text) {
+            if (!searchTerm) return text;
+            const regex = new RegExp(`(${searchTerm})`, 'gi');
+            return text.replace(regex, '<span class="highlight">$1</span>');
+        }
+
+        // Update statistics
+        function updateStats() {
+            const filtered = filterObjections();
+            document.getElementById('totalObjections').textContent = objections.length;
+            document.getElementById('visibleCount').textContent = filtered.length;
+            
+            const categories = new Set(objections.map(o => o.category));
+            document.getElementById('categoriesCount').textContent = categories.size;
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Search
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                searchTerm = e.target.value;
+                renderObjections();
+            });
+
+            // Filter tabs
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                    e.target.classList.add('active');
+                    currentFilter = e.target.dataset.filter;
+                    renderObjections();
+                });
+            });
+        }
+
+        // Make toggleCard globally accessible
+        window.toggleCard = toggleCard;
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
